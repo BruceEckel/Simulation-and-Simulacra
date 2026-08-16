@@ -1,2 +1,2 @@
-# Simulation-and-Simulacra
+# Simulation and Simulacra
 Experiments in simulation
