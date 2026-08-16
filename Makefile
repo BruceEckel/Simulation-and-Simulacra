@@ -19,7 +19,7 @@ SHELL := pwsh.exe
 # is excluded: unlike the repository these came from, there is no template in here.
 SIMLIST = Get-ChildItem fulcrum -Directory
 
-.PHONY: help sims build release dist run test check fmt lint engine publish publish-guards publish-upload clean
+.PHONY: help sims build notes release dist run test check fmt lint engine publish publish-guards publish-upload clean
 
 help: ## What all of this does
 	@Write-Host ''
@@ -52,6 +52,10 @@ help: ## What all of this does
 	@Write-Host '  you can run. Every simulation is one file with its assets compiled in, plus'
 	@Write-Host '  SHA256SUMS.txt. Nothing to unzip.'
 	@Write-Host ''
+	@Write-Host '  Each executable goes up with its note from Windows/, so somebody who downloaded'
+	@Write-Host '  one .exe can find out what it is and which keys it answers to. A simulation with'
+	@Write-Host '  no note, or a note with no simulation, stops the release before it builds.'
+	@Write-Host ''
 	@Write-Host '  Versions are v-prefixed: v0.1.0, v0.2.0. Publishing a version whose tag still'
 	@Write-Host '  names the commit you are on uploads to that same release again, which is how a'
 	@Write-Host '  run that died partway is finished. A tag on any other commit is refused.'
@@ -63,19 +67,34 @@ sims: ## List the simulations
 build: ## Debug build of everything
 	@cargo build --workspace
 
+# The notes that go up with the executables: one per simulation, written for whoever downloads
+# one. They are uploaded beside the binaries because that is where they are needed. Somebody who
+# has one `.exe` and no idea what it does or which keys it answers to should not have to find this
+# repository to learn either.
+NOTES = Windows
+
 # --locked, because a release should be built from the dependency versions that are committed
 # rather than from whatever resolved on the day. Here that covers the engine as well: the commit
 # of Fulcrum this is built against is in Cargo.lock, so a release names one.
-release: ## Every simulation in release, one file each into dist/, plus checksums
+release: notes ## Every simulation in release, one file each into dist/, with its note and checksums
 	@cargo build --workspace --release --locked
 	@if (Test-Path dist) { Remove-Item dist -Recurse -Force }
 	@New-Item -ItemType Directory dist | Out-Null
-	@$(SIMLIST) | ForEach-Object { $$exe = "target/release/$$($$_.Name).exe"; if (-not (Test-Path $$exe)) { throw "$$($$_.Name) produced no executable" }; Copy-Item $$exe dist }
+	@$(SIMLIST) | ForEach-Object { $$exe = "target/release/$$($$_.Name).exe"; if (-not (Test-Path $$exe)) { throw "$$($$_.Name) produced no executable" }; Copy-Item $$exe dist; Copy-Item "$(NOTES)/$$($$_.Name).md" dist }
+	@Copy-Item $(NOTES)/README.md dist/NOTES.md
 	@Get-ChildItem dist/*.exe | ForEach-Object { '{0}  {1}' -f (Get-FileHash $$_ -Algorithm SHA256).Hash.ToLower(), $$_.Name } | Set-Content dist/SHA256SUMS.txt -Encoding ascii
 	@Write-Host ''
-	@Write-Host ('  ' + (Get-ChildItem dist/*.exe).Count + ' executables in dist/, ' + [math]::Round(((Get-ChildItem dist/*.exe | Measure-Object Length -Sum).Sum/1MB),0) + ' MB, and SHA256SUMS.txt') -ForegroundColor Green
+	@Write-Host ('  ' + (Get-ChildItem dist/*.exe).Count + ' executables in dist/, ' + [math]::Round(((Get-ChildItem dist/*.exe | Measure-Object Length -Sum).Sum/1MB),0) + ' MB, ' + (Get-ChildItem dist/*.md).Count + ' notes, and SHA256SUMS.txt') -ForegroundColor Green
 	@Write-Host '  Each carries its own assets, so any one of them can be sent to somebody on its own.'
 	@Write-Host ''
+
+# Run before the build rather than after it, because being told a note is missing is worth knowing
+# before a full release build rather than at the end of one. A simulation with no note reaches
+# somebody as an executable with no way to find out what it is, which is the whole reason the
+# notes go up in the first place; a note with no simulation is a file about something that is not
+# in the release, which is worse than nothing.
+notes: ## Check that every simulation has a note and every note a simulation
+	@$$sims = @($(SIMLIST) | ForEach-Object Name); $$notes = @(Get-ChildItem $(NOTES)/*.md | ForEach-Object BaseName | Where-Object { $$_ -ne 'README' }); $$missing = $$sims | Where-Object { $$_ -notin $$notes }; $$orphan = $$notes | Where-Object { $$_ -notin $$sims }; if ($$missing) { throw "no note in $(NOTES)/ for: $$($$missing -join ', ')" }; if ($$orphan) { throw "a note in $(NOTES)/ for something that is not a simulation: $$($$orphan -join ', ')" }; Write-Host ('  ' + $$sims.Count + ' simulations, ' + $$notes.Count + ' notes, one each way')
 
 # One line, because make gives every line its own shell: an `exit 0` in the first would not stop
 # the second from running and failing on the directory that is not there.

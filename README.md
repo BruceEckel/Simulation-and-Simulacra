@@ -71,6 +71,9 @@ The executables are **not** committed here.
 They are built from this repository and published to a [release](https://github.com/BruceEckel/Simulation-and-Simulacra/releases), which is the only place they exist.
 A binary committed beside its own source is a stale copy of something git stores badly.
 
+Each one goes up with its note from [`Windows/`](Windows) — what the piece is and which keys it answers to — because somebody who downloaded one `.exe` should not have to find this repository to learn either.
+`make release` refuses to build a set where a simulation has no note, or a note names something that is not a simulation.
+
 ## The pieces
 
 | | |
@@ -105,10 +108,15 @@ Cargo.toml          the workspace, and where the engine is imported from
 Makefile            build, check, release, publish
 crates/             this repository's own code
   simulacra-assets/ the assets!() macro: a simulation's assets, inside its executable
+Windows/            one note per executable, published with the release
 fulcrum/            the simulations, one package each
   moebius3/
     src/  assets/  tests/  examples/  README.md
 ```
+
+There are two kinds of writing about each piece, and they are for different people.
+`Windows/moebius3.md` is for whoever downloaded `moebius3.exe`: what it is, what to look at, which keys do what.
+`fulcrum/moebius3/README.md` is for whoever opened the source: how it is built and why it is built that way.
 
 The directory is called `fulcrum/` because that names the family: these are the pieces built on that engine.
 A set built on something else would sit beside it under its own name and be added to `members` in `Cargo.toml`.
