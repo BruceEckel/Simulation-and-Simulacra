@@ -1,0 +1,18 @@
+[package]
+name = "simulacra-assets"
+description = "Assets carried inside the executable: the seam that lets a Fulcrum simulation be one file."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+# The engine's asset server, which this hands a directory to. Everything here is built on its
+# public `new` and `mount`: the engine is upstream's and is not patched.
+fulcrum-asset = { workspace = true }
+# Walks a directory at compile time and emits include_bytes! for every file in it, which is what
+# puts the assets in the binary. Re-exported, so a simulation needs no dependency on it.
+include_dir = { workspace = true }
+# Tells one build's assets from another's, so a rebuilt executable never reads the previous
+# build's unpacked copy.
+xxhash-rust = { workspace = true }

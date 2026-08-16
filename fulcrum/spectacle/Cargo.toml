@@ -1,0 +1,17 @@
+[package]
+name = "spectacle"
+description = "A fireworks show over dark water, put on for no reason but the watching."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+fulcrum = { workspace = true }
+# The `assets!()` this crate's `main` calls: the simulation's assets, inside its own
+# executable. See crates/simulacra-assets.
+simulacra-assets = { workspace = true }
+env_logger = { workspace = true }
+# Manifest-only: lets #[derive(Component)] resolve the `bevy_ecs::` paths it generates.
+# Game source imports only fulcrum::prelude.
+bevy_ecs = { workspace = true }

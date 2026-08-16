@@ -1,0 +1,11 @@
+Unit(
+    display: "Worker",
+    speed: 70.0,
+    hp: 6,
+    damage: 0,
+    range: 0.0,
+    cooldown: 0,
+    aggro: 0.0,
+    radius: 8.0,
+    color: (r: 0.55, g: 0.85, b: 1.0, a: 1.0),
+)

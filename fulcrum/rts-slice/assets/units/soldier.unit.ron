@@ -1,0 +1,11 @@
+Unit(
+    display: "Soldier",
+    speed: 55.0,
+    hp: 14,
+    damage: 2,
+    range: 26.0,
+    cooldown: 45,
+    aggro: 170.0,
+    radius: 10.0,
+    color: (r: 0.35, g: 0.55, b: 1.0, a: 1.0),
+)

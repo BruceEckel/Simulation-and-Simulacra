@@ -1,0 +1,30 @@
+[package]
+name = "parrish"
+description = "Maxfield Parrish clouds: a cloud field painted the way he painted, in transparent coats over a white ground."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+fulcrum = { workspace = true }
+# The `assets!()` this crate's `main` calls: the simulation's assets, inside its own
+# executable. See crates/simulacra-assets.
+simulacra-assets = { workspace = true }
+env_logger = { workspace = true }
+# Manifest-only: lets #[derive(Component)] resolve the `bevy_ecs::` paths it generates.
+# Game source imports only fulcrum::prelude.
+bevy_ecs = { workspace = true }
+# This piece runs its own render passes: it reaches beneath the facade for the device and
+# queue (fulcrum-render), the pipelines and the shader (wgpu), the borderless fullscreen
+# switch (winit) and the uniform byte-cast (bytemuck).
+fulcrum-render = { workspace = true }
+wgpu = { workspace = true }
+winit = { workspace = true }
+bytemuck = { workspace = true }
+
+[dev-dependencies]
+# The `still` example renders a frame on a headless device and writes it to a PNG, which is
+# how the look was tuned.
+image = { workspace = true }
+pollster = { workspace = true }

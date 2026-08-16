@@ -1,0 +1,13 @@
+ParticleEffect(
+    texture: "white.png",
+    mode: Burst(26),
+    lifetime: (0.25, 0.7),
+    initial_speed: (30.0, 160.0),
+    direction_deg: 90.0,
+    spread_deg: 360.0,
+    gravity: (0.0, -120.0),
+    size: (start: 5.0, end: 0.8),
+    color_start: (r: 1.0, g: 0.45, b: 0.25, a: 1.0),
+    color_end: (r: 0.5, g: 0.05, b: 0.05, a: 0.0),
+    additive: true,
+)

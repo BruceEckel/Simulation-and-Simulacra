@@ -1,0 +1,28 @@
+[package]
+name = "thunderhead"
+description = "A flat desert under enormous drifting thunderheads, drawn one physical pixel at a time."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+fulcrum = { workspace = true }
+# The `assets!()` this crate's `main` calls: the simulation's assets, inside its own
+# executable. See crates/simulacra-assets.
+simulacra-assets = { workspace = true }
+env_logger = { workspace = true }
+# Manifest-only: lets #[derive(Component)] resolve the `bevy_ecs::` paths it generates.
+# Game source imports only fulcrum::prelude.
+bevy_ecs = { workspace = true }
+# This piece paints the screen itself, one texel per physical pixel, so it reaches beneath
+# the facade for the GPU queue (fulcrum-render), the per-frame texture upload (wgpu), the
+# pixel byte-cast (bytemuck) and the borderless fullscreen switch (winit).
+fulcrum-render = { workspace = true }
+wgpu = { workspace = true }
+winit = { workspace = true }
+bytemuck = { workspace = true }
+
+[dev-dependencies]
+# The `still` example writes a frame to a PNG, which is how the look was tuned.
+image = { workspace = true }

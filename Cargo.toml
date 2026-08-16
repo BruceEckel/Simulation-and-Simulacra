@@ -1,0 +1,66 @@
+[workspace]
+resolver = "2"
+# The simulations live under fulcrum/, which is what the directory name means: these are the ones
+# built on the Fulcrum engine. A second family built on something else would sit beside it under
+# its own name and be added here. crates/ is this repository's own code, which is one crate.
+members = ["crates/*", "fulcrum/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/BruceEckel/Simulation-and-Simulacra"
+
+# ---------------------------------------------------------------------------------------
+# the engine
+# ---------------------------------------------------------------------------------------
+#
+# Imported rather than copied. Cargo fetches the repository into its own cache and builds the
+# crates from there, so no copy of the engine lives in this tree and there is one of it to fix.
+#
+# jcerise/fulcrum is the only thing this repository depends on, and it is depended on unmodified:
+# no fork, no patch table, no vendored copy. Anything these simulations need that the engine does
+# not have is written here, in crates/, on top of what the engine already offers publicly. That is
+# what `simulacra-assets` is: it puts each simulation's assets inside its executable, which the
+# engine has no notion of, using nothing but `AssetServer::new` and `AssetServer::mount`.
+#
+# `Cargo.lock` pins the commit these resolved to, which is what a release wants: the same
+# executables come out of the same tag a year later. New engine work is taken on purpose:
+#
+#     cargo update -p fulcrum        move to the newest commit on the engine's default branch
+#     make engine                    the same thing, and then build and test against it
+
+[workspace.dependencies]
+fulcrum = { git = "https://github.com/jcerise/fulcrum.git" }
+# The asset server, which `simulacra-assets` hands a directory to.
+fulcrum-asset = { git = "https://github.com/jcerise/fulcrum.git" }
+# Reached for directly by the pieces that run their own render pass rather than going through the
+# facade: they need the device and the queue.
+fulcrum-render = { git = "https://github.com/jcerise/fulcrum.git" }
+
+# This repository's own.
+simulacra-assets = { path = "crates/simulacra-assets" }
+
+# External, and every version here matches the engine's own workspace on purpose. A simulation
+# that hands a `wgpu::Device` to `fulcrum-render` has to be holding the same `wgpu` the engine was
+# built against, and cargo only unifies the two when the requirements agree. Bumping one of these
+# without bumping it in the engine is how you get two versions of wgpu in one binary and a type
+# error that names the same type twice.
+bevy_ecs = "0.19"
+wgpu = "29.0"    # pinned to egui-wgpu's wgpu; bump together
+winit = "0.30"
+image = { version = "0.25", default-features = false, features = ["png"] }
+bytemuck = { version = "1.25", features = ["derive"] }
+pollster = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+ron = "0.12"
+log = "0.4"
+env_logger = "0.11"
+# Used only by simulacra-assets: the compile-time directory walk that puts the assets in the
+# binary, and the hash that tells one build's assets from another's.
+include_dir = "0.7"
+xxhash-rust = { version = "0.8", features = ["xxh3"] }
+
+# Keep dependencies (wgpu, image decoding, ...) fast in debug builds.
+[profile.dev.package."*"]
+opt-level = 2

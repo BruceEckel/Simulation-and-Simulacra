@@ -1,0 +1,17 @@
+[package]
+name = "lullaby"
+description = "A field of light that cools, settles, dims to black, and goes on breathing after you close your eyes."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+fulcrum = { workspace = true }
+# The `assets!()` this crate's `main` calls: the simulation's assets, inside its own
+# executable. See crates/simulacra-assets.
+simulacra-assets = { workspace = true }
+env_logger = { workspace = true }
+# Manifest-only: lets #[derive(Component)] resolve the `bevy_ecs::` paths it generates.
+# Game source imports only fulcrum::prelude.
+bevy_ecs = { workspace = true }

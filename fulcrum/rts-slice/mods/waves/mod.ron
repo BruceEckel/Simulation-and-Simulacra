@@ -1,0 +1,6 @@
+Mod(
+    id: "waves",
+    name: "Attacker Waves",
+    version: "1.0.0",
+    scripts: ["scripts/init.lua"],
+)

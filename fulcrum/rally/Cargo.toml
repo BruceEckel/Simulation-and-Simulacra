@@ -1,0 +1,17 @@
+[package]
+name = "rally"
+description = "Pong as a simulation: autonomous paddles, a court that keeps adding balls and paddles."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+fulcrum = { workspace = true }
+# The `assets!()` this crate's `main` calls: the simulation's assets, inside its own
+# executable. See crates/simulacra-assets.
+simulacra-assets = { workspace = true }
+env_logger = { workspace = true }
+# Manifest-only: lets #[derive(Component)] resolve the `bevy_ecs::` paths it generates.
+# Game source imports only fulcrum::prelude.
+bevy_ecs = { workspace = true }

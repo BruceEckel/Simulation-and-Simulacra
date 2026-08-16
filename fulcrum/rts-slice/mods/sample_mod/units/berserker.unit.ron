@@ -1,0 +1,11 @@
+Unit(
+    display: "Berserker",
+    speed: 95.0,
+    hp: 8,
+    damage: 4,
+    range: 22.0,
+    cooldown: 30,
+    aggro: 240.0,
+    radius: 9.0,
+    color: (r: 1.0, g: 0.35, b: 0.25, a: 1.0),
+)

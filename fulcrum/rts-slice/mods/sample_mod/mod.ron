@@ -1,0 +1,7 @@
+Mod(
+    id: "sample_mod",
+    name: "Berserkers",
+    version: "1.0.0",
+    load_after: ["waves"],
+    scripts: ["scripts/init.lua"],
+)
