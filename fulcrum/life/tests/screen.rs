@@ -12,7 +12,7 @@
 //! defence: with nothing narrower than sixteen bytes anywhere, there is no padding for the two
 //! languages to disagree about.
 
-use life::screen::Uniforms;
+use life::screen::{Uniforms, frame_size};
 
 /// The fields of the buffer, in the order both declarations must have them in.
 const FIELDS: &[&str] = &[
@@ -101,6 +101,72 @@ fn the_shader_reads_the_loose_components_this_side_writes() {
         assert!(
             SHADER.contains(use_site),
             "the shader no longer reads {use_site}, which this side still fills in"
+        );
+    }
+}
+
+// ---------------------------------------------------------------------------------------
+// how big the frame is
+// ---------------------------------------------------------------------------------------
+
+#[test]
+fn the_frame_is_allocated_once_for_the_largest_display() {
+    // Nothing allocated yet: take the whole display straight away, so that going fullscreen
+    // later is not an allocation.
+    assert_eq!(frame_size((0, 0), (1600, 1000), (2560, 1440)), (2560, 1440));
+    // And never come out smaller than the window, even on a machine that reports no monitors.
+    assert_eq!(frame_size((0, 0), (1600, 1000), (0, 0)), (1600, 1000));
+}
+
+#[test]
+fn the_frame_never_shrinks_and_always_covers_the_window() {
+    // This is the property the whole thing rests on. A texture a sprite is drawing cannot be
+    // replaced behind its handle, so a *new* size means a new handle and a texture that is
+    // never freed. Every resize that does not need one must therefore not get one.
+    let display = (2560, 1440);
+    let mut size = frame_size((0, 0), (1600, 1000), display);
+    let first = size;
+
+    // A drag produces a new window size every frame. None of them may move it.
+    for width in (600..2560).step_by(7) {
+        for height in [400, 900, 1440] {
+            let next = frame_size(size, (width, height), display);
+            assert_eq!(
+                next, size,
+                "a window of {width}x{height} reallocated the frame"
+            );
+            size = next;
+        }
+    }
+    assert_eq!(size, first, "the frame moved during an ordinary drag");
+
+    // A window bigger than any display — a spanned window, or a scale factor the monitor list
+    // did not account for — grows it, once, and only on the axis that needed it.
+    size = frame_size(size, (3000, 1200), display);
+    assert_eq!(size, (3000, 1440));
+    assert_eq!(
+        frame_size(size, (800, 600), display),
+        size,
+        "it shrank back again"
+    );
+}
+
+#[test]
+fn the_frame_covers_every_window_it_is_asked_about() {
+    let display = (1920, 1080);
+    let mut size = frame_size((0, 0), (800, 600), display);
+    for window in [
+        (800, 600),
+        (1920, 1080),
+        (2560, 1440),
+        (640, 480),
+        (3840, 2160),
+        (100, 100),
+    ] {
+        size = frame_size(size, window, display);
+        assert!(
+            size.0 >= window.0 && size.1 >= window.1,
+            "a {window:?} window does not fit in a {size:?} frame"
         );
     }
 }

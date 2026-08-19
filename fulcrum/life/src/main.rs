@@ -20,7 +20,7 @@ use fulcrum_render::{GlyphCache, GpuContext, WhitePixel, WindowHandle};
 use life::game::{self, Board, Dials, GamePlugin};
 use life::look::LOOKS;
 use life::rules::RULES;
-use life::screen::{OUTPUT_FORMAT, Reading, Renderer, compose};
+use life::screen::{OUTPUT_FORMAT, Reading, Renderer, compose, frame_size};
 use simulacra_assets::assets;
 
 /// Readout text height in world units, before HiDPI scaling. The built-in font is sharpest at
@@ -162,12 +162,39 @@ fn fit_window(
 ///
 /// Not a startup system: the GPU does not exist until the window does, and the window does not
 /// exist until the event loop has run once.
+///
+/// # Why the frame is bigger than the window, and never shrinks
+///
+/// The obvious thing is a frame texture exactly the size of the window, rebuilt whenever the
+/// window changes. That is what this did, and it is wrong, for a reason worth writing down
+/// because nothing about it is visible from here.
+///
+/// The engine's sprite renderer caches one GPU bind group per texture, keyed by the handle's
+/// id, and builds it with `or_insert_with` — once, on first use. `Assets::replace` puts new
+/// contents behind the *same* handle, so the id does not change, so the cached bind group is
+/// never rebuilt and goes on pointing at the texture that was replaced. The engine pairs every
+/// `replace` with an invalidation for exactly this reason, but that call is `pub(crate)` and
+/// hot reload is its only caller. From out here `replace` on a texture a sprite is drawing is
+/// simply a trap: the sprite keeps showing the last frame written before the resize, forever.
+///
+/// So the handle is never reused. A new one is made instead, which gets its own bind group —
+/// and because a new handle also means a texture that nothing will ever free, one is made as
+/// rarely as possible. The frame is allocated once at the size of the largest display this
+/// window could be dragged onto, so going fullscreen needs no new texture at all, and it only
+/// ever grows. Every ordinary resize then costs nothing: the texture is already big enough.
+///
+/// What makes an oversized frame usable is the anchor. The sprite is pinned by its top-left
+/// corner to the top-left corner of the window and drawn at one texel to the pixel, so texel
+/// (0, 0) is window pixel (0, 0) whatever size either of them is, and the overhang falls off
+/// the right and bottom edges where the viewport clips it. The pass scissors itself to the
+/// window, so nothing is drawn into the overhang in the first place.
 fn ensure_renderer(
     mut commands: Commands,
     gpu: Option<Res<GpuContext>>,
+    handle: Option<Res<WindowHandle>>,
     mut frame: ResMut<Frame>,
     mut textures: ResMut<Assets<Texture>>,
-    mut sprites: Query<&mut Sprite>,
+    mut sprites: Query<(&mut Sprite, &mut Transform2D)>,
     window: Res<WindowInfo>,
 ) {
     let Some(gpu) = gpu else { return };
@@ -177,54 +204,82 @@ fn ensure_renderer(
     if window.width == 0 || window.height == 0 {
         return;
     }
-    let size = (window.width, window.height);
-    if frame.size == size && frame.handle.is_some() {
-        return;
-    }
-    frame.size = size;
+    let seen = (window.width, window.height);
 
-    let texture = gpu.device.create_texture(&wgpu::TextureDescriptor {
-        label: Some("life frame"),
-        size: wgpu::Extent3d {
-            width: size.0,
-            height: size.1,
-            depth_or_array_layers: 1,
-        },
-        mip_level_count: 1,
-        sample_count: 1,
-        dimension: wgpu::TextureDimension::D2,
-        format: OUTPUT_FORMAT,
-        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
-        view_formats: &[],
-    });
-    let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-    let wrapped = Texture {
-        texture,
-        view: view.clone(),
-        width: size.0,
-        height: size.1,
-    };
-    match frame.handle {
-        Some(handle) => textures.replace(handle, wrapped),
-        None => frame.handle = Some(textures.insert_with_path("<life>", wrapped)),
-    }
-    frame.view = Some(view);
+    let wanted = frame_size(frame.size, seen, largest_display(handle.as_deref()));
 
-    let handle = frame.handle.expect("just set");
-    let extent = vec2(size.0 as f32, size.1 as f32);
+    if wanted != frame.size || frame.handle.is_none() {
+        frame.size = wanted;
+        let texture = gpu.device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("life frame"),
+            size: wgpu::Extent3d {
+                width: wanted.0,
+                height: wanted.1,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: OUTPUT_FORMAT,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            view_formats: &[],
+        });
+        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+        // A fresh handle every time, never `replace`: see above.
+        frame.handle = Some(textures.insert_with_path(
+            format!("<life {}x{}>", wanted.0, wanted.1),
+            Texture {
+                texture,
+                view: view.clone(),
+                width: wanted.0,
+                height: wanted.1,
+            },
+        ));
+        frame.view = Some(view);
+    }
+
+    let texture = frame.handle.expect("just set");
+    let extent = vec2(wanted.0 as f32, wanted.1 as f32);
+    // The window's top-left corner, in world units, which are physical pixels here.
+    let corner = vec2(-(seen.0 as f32) / 2.0, seen.1 as f32 / 2.0);
     match frame.sprite.and_then(|entity| sprites.get_mut(entity).ok()) {
-        Some(mut sprite) => sprite.custom_size = Some(extent),
+        Some((mut sprite, mut transform)) => {
+            sprite.texture = texture;
+            sprite.custom_size = Some(extent);
+            transform.translation = corner;
+        }
         None => {
             frame.sprite = Some(
                 commands
                     .spawn((
-                        Sprite::new(handle).with_size(extent).with_z(1.0),
-                        Transform2D::default(),
+                        Sprite {
+                            // Pinned by its top-left corner rather than its middle, so that
+                            // texel (0, 0) is window pixel (0, 0) however much bigger the
+                            // frame is than the window.
+                            anchor: vec2(0.0, 1.0),
+                            ..Sprite::new(texture).with_size(extent).with_z(1.0)
+                        },
+                        Transform2D::from_xy(corner.x, corner.y),
                     ))
                     .id(),
             );
         }
     }
+}
+
+/// The size of the largest display this window could be moved to, or a sensible guess when
+/// there is no window to ask.
+fn largest_display(handle: Option<&WindowHandle>) -> (u32, u32) {
+    let Some(handle) = handle else {
+        return (game::DEFAULT_WINDOW.x as u32, game::DEFAULT_WINDOW.y as u32);
+    };
+    handle
+        .0
+        .available_monitors()
+        .fold((0, 0), |biggest, monitor| {
+            let size = monitor.size();
+            (biggest.0.max(size.width), biggest.1.max(size.height))
+        })
 }
 
 /// Carry this generation to the GPU if it is not up there already, and draw it.
@@ -256,7 +311,13 @@ fn draw(
         return;
     };
     renderer.carry(&gpu.device, &gpu.queue, &board);
-    renderer.draw(&gpu.device, &gpu.queue, &uniforms, view);
+    renderer.draw(
+        &gpu.device,
+        &gpu.queue,
+        &uniforms,
+        view,
+        (window.width, window.height),
+    );
 }
 
 /// The keys that change nothing about the rule: the palette, how the field is read, whether the
