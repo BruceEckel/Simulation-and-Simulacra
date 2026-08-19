@@ -8,9 +8,9 @@ place they exist. A binary committed beside its own source is a stale copy of so
 stores badly, and it was never any use to anybody else: it is out of date the moment the source
 moves on.
 
-The notes do go up with them. Every release carries these twenty files alongside the executables,
-so somebody who has downloaded one `.exe` and nothing else can find out what it is and which keys
-it answers to without coming back here.
+The notes do go up with them. Every release carries these twenty-one files alongside the
+executables, so somebody who has downloaded one `.exe` and nothing else can find out what it is
+and which keys it answers to without coming back here.
 
 | Executable | Description |
 |---|---|
@@ -20,6 +20,7 @@ it answers to without coming back here.
 | [`fractal.exe`](fractal.md) | Ten fractals, two families, and a progressive viewer to zoom into them with. |
 | [`heatflow.exe`](heatflow.md) | Statistical heat flow: a hard-disk gas conducting heat between two thermal walls. |
 | [`jig.exe`](jig.md) | A dancing skeleton: shake the hips, and eighteen pendulums work out the rest. |
+| [`life.exe`](life.md) | Conway's Game of Life and forty-three of its relatives, from blocky cells down to one per pixel. |
 | [`ligne.exe`](ligne.md) | Ligne claire clouds: a live two-dimensional cloud field, drawn in flat colour with a clean line around everything. |
 | [`lullaby.exe`](lullaby.md) | A field of light that cools, settles, dims to black, and goes on breathing after you close your eyes. |
 | [`mesmerize.exe`](mesmerize.md) | A slow curl-flow field of light that breathes at five and a half breaths a minute. |
@@ -62,6 +63,11 @@ cloud at all: it draws overlapping circles and keeps the arcs that are left. `mo
 that last one again with the line weight, the arc count and the palette on keys, and
 `moebius3.exe` is that one with shading in it, drawn as hatch strokes, and a man on a horse
 crossing the sand underneath.
+
+`life.exe` is the one most people will already know the name of, and it opens in an ordinary
+window like everything else here. It is worth knowing that it is not only Conway's rule: `Tab`
+walks between three families of them, and `X` held down takes the field from cells you could
+count with your finger to one cell per physical pixel.
 
 ## Building them yourself
 

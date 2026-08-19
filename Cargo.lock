@@ -2186,6 +2186,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "life"
+version = "0.1.0"
+dependencies = [
+ "bevy_ecs",
+ "bytemuck",
+ "env_logger",
+ "fulcrum",
+ "fulcrum-render",
+ "image",
+ "pollster",
+ "simulacra-assets",
+ "wgpu",
+ "winit",
+]
+
+[[package]]
 name = "ligne"
 version = "0.1.0"
 dependencies = [

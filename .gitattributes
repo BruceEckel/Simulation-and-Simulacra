@@ -1,0 +1,19 @@
+# Line endings, for the handful of files where they are load-bearing.
+#
+# `simulacra-assets` is the crate that puts a simulation's assets inside its executable, and the
+# thing it has to promise is that a file comes out of the binary byte for byte as it went in. Its
+# tests hold it to that by comparing the unpacked bytes against a literal: `b"top\n"`.
+#
+# That makes its fixtures data rather than source. Git's default on Windows is to translate line
+# endings on the way to the working tree, so a clone with `core.autocrlf=true` writes them out as
+# `top\r\n` and the test fails on a machine where nothing is actually wrong.
+#
+# `-text` says to leave them alone in both directions: what is committed is what appears on disk,
+# on every platform. That is the right promise for this directory rather than `text eol=lf`,
+# because what is in here is a *tree of assets* — the next fixture added to it is as likely to be
+# a PNG as a text file, and a rule that normalised line endings would quietly corrupt it, which
+# is precisely the failure this crate exists to rule out.
+#
+# Scoped to that directory on purpose. Nothing else here cares: Rust, TOML, WGSL and Markdown all
+# read either ending, and a repository-wide rule would be a bigger claim than the problem.
+crates/simulacra-assets/tests/tree/** -text

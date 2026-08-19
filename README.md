@@ -2,7 +2,7 @@
 
 Experiments in simulation.
 
-Twenty pieces, each one a program that runs a rule and draws what the rule does.
+Twenty-one pieces, each one a program that runs a rule and draws what the rule does.
 Some are simulations in the ordinary sense: sand piling up until it slides, a gas carrying heat between two walls, a flock with three rules and no leader.
 The rest are simulacra, which is the other half of the title: a Moebius sky, a Parrish sky, a Van Gogh painting run as a fluid.
 Those simulate a way of drawing rather than a piece of the world.
@@ -84,6 +84,7 @@ Each one goes up with its note from [`Windows/`](Windows) — what the piece is 
 | `fractal` | Ten fractals, two families, and a progressive viewer to zoom into them with. |
 | `heatflow` | Statistical heat flow: a hard-disk gas conducting heat between two thermal walls. |
 | `jig` | A dancing skeleton: shake the hips, and eighteen pendulums work out the rest. |
+| `life` | Conway's Game of Life and forty-three of its relatives, from blocky cells down to one per pixel. |
 | `ligne` | Ligne claire clouds: a live two-dimensional cloud field, drawn in flat colour with a clean line around everything. |
 | `lullaby` | A field of light that cools, settles, dims to black, and goes on breathing after you close your eyes. |
 | `mesmerize` | A slow curl-flow field of light that breathes at five and a half breaths a minute. |
