@@ -6,8 +6,8 @@ This is the source note. What the keys do is in [`Windows/_viewer.md`](../../Win
 
 ## Why it is here and why it is called that
 
-A release is a folder of twenty-two executables, and a folder of executables tells you nothing
-about which of them you would like to look at. The underscore is the whole of the naming
+A release unpacks into a folder of twenty-two executables, and a folder of executables tells you
+nothing about which of them you would like to look at. The underscore is the whole of the naming
 decision: `_` sorts before every letter, so this is the first thing in the folder, which is where
 something that explains the rest belongs.
 
@@ -42,8 +42,8 @@ unpacked into one directory with every executable side by side, and a developmen
 all in `target/release`, side by side again.
 
 Anything not found is still listed with its description and a note that it is not here, which is
-the useful behaviour in both of the situations it happens in — a partial download, and a source
-tree where you have not run `cargo build --workspace --release` yet.
+the useful behaviour in both of the situations it happens in — a set that has been split up, and a
+source tree where you have not run `cargo build --workspace --release` yet.
 
 ## Laying it out, and the mistake worth writing down
 

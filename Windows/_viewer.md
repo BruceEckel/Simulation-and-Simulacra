@@ -4,10 +4,10 @@ The front door: every simulation in the set, what it is, and a way to start it.
 
 ## What it is
 
-A release is a folder of twenty-two executables with names like `moebius3.exe` and `heatflow.exe`,
-and nothing in a folder tells you which of them you would like. This is the one that does. It
-lists all twenty-one simulations with the line each one describes itself with, and starts
-whichever you pick.
+A release unpacks into a folder of twenty-two executables with names like `moebius3.exe` and
+`heatflow.exe`, and nothing in a folder tells you which of them you would like. This is the one
+that does. It lists all twenty-one simulations with the line each one describes itself with, and
+starts whichever you pick.
 
 It is called `_viewer` for one reason only: the underscore sorts it to the top of a directory
 listing, so it is the first thing you see when you open the folder, which is where a thing like
@@ -32,9 +32,8 @@ It looks for the simulations **beside itself**, and it says under the list where
 you have chosen. Anything it cannot find is still listed, with what it is and a note that it is
 not in this directory.
 
-That happens in two ordinary situations. In a release, if you downloaded some of the executables
-and not others — the missing ones are still described, so you can see what you are missing. And
-while working on the source, where they only exist once they have been built:
+That happens if the set has been split up — one moved out of the folder, or the viewer moved out
+on its own — and while working on the source, where they only exist once they have been built:
 
 ```sh
 cargo build --workspace --release

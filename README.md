@@ -35,7 +35,8 @@ If the new commit breaks something, `git checkout Cargo.lock` puts the pin back.
 ### One file, and what it takes
 
 A simulation here is meant to be one file.
-You hand somebody `moebius3.exe` and it runs: no directory to keep beside it, nothing to unzip, no path from your machine baked into it.
+You hand somebody `moebius3.exe` and it runs: no directory to keep beside it, nothing to unpack alongside it, no path from your machine baked into it.
+The set is *released* as one zip, because `_viewer.exe` needs the others in its own directory, but that is about delivering twenty-two of them at once: any one of them still runs from anywhere you move it afterwards.
 
 The engine has no notion of that.
 `AssetServer::new(root)` takes a directory, and a game written the ordinary way passes `concat!(env!("CARGO_MANIFEST_DIR"), "/assets")`, which is an absolute path fixed at build time.
@@ -60,12 +61,13 @@ The unpacked copy is a cache: delete it whenever you like and the next run write
 
 Nothing builds this in the cloud.
 The set is compiled here and pushed up with the `gh` CLI, so what people download is what you can run.
-Every simulation is one file with its assets inside it, plus `SHA256SUMS.txt`.
+A release is one zip. It unpacks into a directory holding every executable, a note for each, and `SHA256SUMS.txt`, with `_viewer.exe` sorted to the top of it.
+Every simulation in there is still one file with its assets inside it.
 
 ```sh
 make check                     # format, clippy, tests, determinism in release
 git commit -am "..." && git push
-make release                   # 20 executables into dist/
+make release                   # one zip in dist/, with all 22 in it
 make publish VERSION=v0.1.0    # builds, tags, pushes, uploads
 ```
 

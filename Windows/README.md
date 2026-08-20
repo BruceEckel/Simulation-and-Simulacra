@@ -39,13 +39,18 @@ and which keys it answers to without coming back here.
 
 ## Getting one
 
-Take it from a [release](https://github.com/BruceEckel/Simulation-and-Simulacra/releases). Every
-simulation is one file, with its assets compiled in, so there is nothing to unzip and nothing to
-keep beside it: save it wherever you like and run it.
+Take it from a [release](https://github.com/BruceEckel/Simulation-and-Simulacra/releases). It is
+one zip. Unpack it and you have a directory holding all twenty-two executables, a note for each,
+and a `SHA256SUMS.txt`, with `_viewer.exe` sorted to the top — open that one first.
+
+Keep them together. Each executable carries its own assets and will run from anywhere you move it
+to, but `_viewer.exe` finds the others by looking in its own directory, so moving one out on its
+own works and moving the viewer out on its own leaves it with nothing to show.
 
 The binaries are unsigned, so Windows SmartScreen warns the first time you run one: click **More
-info**, then **Run anyway**. Or clear the download mark first with `Unblock-File .\moebius3.exe`.
-Each release carries a `SHA256SUMS.txt` if you would rather check than trust.
+info**, then **Run anyway**. Or clear the download mark first — `Unblock-File .\*.exe` in the
+unpacked directory does the lot. `SHA256SUMS.txt` is in there if you would rather check than
+trust, and `make release` prints the checksum of the zip itself.
 
 Releases are Windows only. For macOS or Linux, clone the repository and `cargo build --workspace
 --release`; nothing in the engine is platform-specific.
@@ -80,9 +85,9 @@ count with your finger to one cell per physical pixel.
 make release
 ```
 
-That builds every simulation, collects one executable each into `dist/`, copies these notes in
-beside them, and writes the `SHA256SUMS.txt` that goes up with them. `dist/` is ignored by git.
-`make publish VERSION=v0.1.0` does the same build, tags the commit, and uploads the lot to a
+That builds every simulation, gathers the executables and these notes into one directory under
+`dist/`, writes a `SHA256SUMS.txt` beside them, and zips the directory. `dist/` is ignored by git.
+`make publish VERSION=v0.1.0` does the same build, tags the commit, and uploads that one zip to a
 GitHub release with the `gh` CLI. The released binaries are built on a Windows machine by hand
 rather than in CI, so they are the same files whoever publishes them can run.
 
