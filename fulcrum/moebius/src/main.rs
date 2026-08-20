@@ -16,6 +16,7 @@ use moebius::game::{GamePlugin, Weather};
 use moebius::look::LOOKS;
 use moebius::sky::{self, OUTPUT_FORMAT, Renderer, Slab};
 use simulacra_assets::assets;
+use simulacra_frame::{Frame, FramePlugin, fit_frame};
 
 /// Readout text height in world units, before HiDPI scaling.
 const READOUT_SIZE: f32 = 8.0;
@@ -53,15 +54,6 @@ struct Screen {
     sky: Sky,
     /// And the same circles laid out for the shader, cut down to what is in front of you.
     slab: Option<Box<Slab>>,
-    /// Handle of the texture the pass writes.
-    handle: Option<Handle<Texture>>,
-    /// A view of it, kept so the pass can be pointed at it without going through the asset
-    /// store every frame.
-    view: Option<wgpu::TextureView>,
-    /// Its current size.
-    size: (u32, u32),
-    /// The sprite showing it.
-    sprite: Option<Entity>,
     /// How many groups of circles were drawn last frame.
     groups: usize,
     /// Frame time, eased, in milliseconds.
@@ -130,76 +122,16 @@ fn fit_window(
     }
 }
 
-/// Build the pipeline, once, on the first frame that has a device.
+/// Build the pipeline, once there is a device to build it against.
 ///
 /// Not a startup system: the GPU does not exist until the window does, and the window does not
-/// exist until the event loop has run once.
-fn ensure_renderer(
-    mut commands: Commands,
-    gpu: Option<Res<GpuContext>>,
-    mut screen: ResMut<Screen>,
-    mut textures: ResMut<Assets<Texture>>,
-    mut sprites: Query<&mut Sprite>,
-    window: Res<WindowInfo>,
-) {
+/// exist until the event loop has run once. The texture it draws into, and the sprite showing
+/// it, belong to `simulacra-frame` — see that crate for why they are not kept here.
+fn ensure_renderer(gpu: Option<Res<GpuContext>>, mut screen: ResMut<Screen>) {
     let Some(gpu) = gpu else { return };
     if screen.renderer.is_none() {
         screen.renderer = Some(Renderer::new(&gpu.device));
         screen.slab = Some(Slab::boxed());
-    }
-    if window.width == 0 || window.height == 0 {
-        return;
-    }
-    let size = (window.width, window.height);
-    if screen.size == size && screen.handle.is_some() {
-        return;
-    }
-    screen.size = size;
-
-    let texture = gpu.device.create_texture(&wgpu::TextureDescriptor {
-        label: Some("moebius frame"),
-        size: wgpu::Extent3d {
-            width: size.0,
-            height: size.1,
-            depth_or_array_layers: 1,
-        },
-        mip_level_count: 1,
-        sample_count: 1,
-        dimension: wgpu::TextureDimension::D2,
-        format: OUTPUT_FORMAT,
-        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
-        view_formats: &[],
-    });
-    let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-    let wrapped = Texture {
-        texture,
-        view: view.clone(),
-        width: size.0,
-        height: size.1,
-    };
-    match screen.handle {
-        Some(handle) => textures.replace(handle, wrapped),
-        None => screen.handle = Some(textures.insert_with_path("<moebius>", wrapped)),
-    }
-    screen.view = Some(view);
-
-    let handle = screen.handle.expect("just set");
-    let extent = vec2(size.0 as f32, size.1 as f32);
-    match screen
-        .sprite
-        .and_then(|entity| sprites.get_mut(entity).ok())
-    {
-        Some(mut sprite) => sprite.custom_size = Some(extent),
-        None => {
-            screen.sprite = Some(
-                commands
-                    .spawn((
-                        Sprite::new(handle).with_size(extent).with_z(1.0),
-                        Transform2D::default(),
-                    ))
-                    .id(),
-            );
-        }
     }
 }
 
@@ -208,12 +140,12 @@ fn draw(
     gpu: Option<Res<GpuContext>>,
     weather: Res<Weather>,
     painter: Res<Painter>,
-    window: Res<WindowInfo>,
+    frame: Res<Frame>,
     time: Res<Time>,
     mut screen: ResMut<Screen>,
 ) {
     let Some(gpu) = gpu else { return };
-    if window.width == 0 || window.height == 0 {
+    if !frame.ready() {
         return;
     }
     // Eased, because a readout that flickers between 5 and 9 tells you less than one that
@@ -221,10 +153,11 @@ fn draw(
     screen.pace += 0.06 * (time.frame_delta * 1000.0 - screen.pace);
 
     screen.sky.build(weather.clock);
+    let Some(view) = frame.view() else { return };
+    let window = frame.window();
     let Screen {
         renderer: Some(renderer),
         slab: Some(slab),
-        view: Some(view),
         sky,
         ..
     } = &mut *screen
@@ -235,10 +168,10 @@ fn draw(
         &weather,
         sky,
         &LOOKS[painter.palette % LOOKS.len()],
-        (window.width, window.height),
+        window,
         slab,
     );
-    renderer.draw(&gpu.device, &gpu.queue, &uniforms, slab, view);
+    renderer.draw(&gpu.device, &gpu.queue, &uniforms, slab, view, window);
     screen.groups = uniforms.counts[0] as usize;
 }
 
@@ -337,6 +270,7 @@ fn main() {
     })
     .insert_resource(assets!())
     .with_plugin(DefaultPlugins)
+    .with_plugin(FramePlugin::new("moebius", OUTPUT_FORMAT))
     .with_plugin(GamePlugin)
     .insert_resource(Painter::default())
     .insert_resource(Screen::default())
@@ -344,7 +278,9 @@ fn main() {
     .add_frame_system(fit_window)
     .add_frame_system(painter_controls)
     // Chained: the second of these draws with what the first builds.
-    .add_frame_system((ensure_renderer, draw).chain())
+    // Chained: the second draws with what the first builds, and both come after the shared
+    // frame system, which is what decides the texture they draw into.
+    .add_frame_system((ensure_renderer, draw).chain().after(fit_frame))
     .add_frame_system(readout)
     .run();
 }

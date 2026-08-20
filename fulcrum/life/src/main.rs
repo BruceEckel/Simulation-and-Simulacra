@@ -20,8 +20,9 @@ use fulcrum_render::{GlyphCache, GpuContext, WhitePixel, WindowHandle};
 use life::game::{self, Board, Dials, GamePlugin};
 use life::look::LOOKS;
 use life::rules::RULES;
-use life::screen::{OUTPUT_FORMAT, Reading, Renderer, compose, frame_size};
+use life::screen::{OUTPUT_FORMAT, Reading, Renderer, compose};
 use simulacra_assets::assets;
+use simulacra_frame::{Frame, FramePlugin, fit_frame};
 
 /// Readout text height in world units, before HiDPI scaling. The built-in font is sharpest at
 /// multiples of 8.
@@ -66,22 +67,6 @@ struct Painter {
     /// How big the readout's panel needs to be, in physical pixels, as the last frame measured
     /// it. Read by `fit_window`, which puts the panel and the text where it says.
     panel: Vec2,
-}
-
-/// The pass, the texture it draws into, and the sprite that shows it.
-#[derive(Resource, Default)]
-struct Frame {
-    /// Built on the first frame, once there is a device to build it against.
-    renderer: Option<Renderer>,
-    /// Handle of the texture the pass writes.
-    handle: Option<Handle<Texture>>,
-    /// A view of it, kept so the pass can be pointed at it without going through the asset
-    /// store every frame.
-    view: Option<wgpu::TextureView>,
-    /// Its current size.
-    size: (u32, u32),
-    /// The sprite showing it.
-    sprite: Option<Entity>,
 }
 
 /// Marks the readout text.
@@ -158,128 +143,21 @@ fn fit_window(
     }
 }
 
-/// Build the pipeline and the frame it draws into, once there is a device and a window size.
+/// The one thing left that is this piece's own: the pipeline, built on the first frame that
+/// has a device. The texture it draws into, and the sprite showing it, are `simulacra-frame`'s
+/// — see that crate for why they are not here.
+#[derive(Resource, Default)]
+struct Pass(Option<Renderer>);
+
+/// Build the pipeline, once there is a device to build it against.
 ///
 /// Not a startup system: the GPU does not exist until the window does, and the window does not
 /// exist until the event loop has run once.
-///
-/// # Why the frame is bigger than the window, and never shrinks
-///
-/// The obvious thing is a frame texture exactly the size of the window, rebuilt whenever the
-/// window changes. That is what this did, and it is wrong, for a reason worth writing down
-/// because nothing about it is visible from here.
-///
-/// The engine's sprite renderer caches one GPU bind group per texture, keyed by the handle's
-/// id, and builds it with `or_insert_with` — once, on first use. `Assets::replace` puts new
-/// contents behind the *same* handle, so the id does not change, so the cached bind group is
-/// never rebuilt and goes on pointing at the texture that was replaced. The engine pairs every
-/// `replace` with an invalidation for exactly this reason, but that call is `pub(crate)` and
-/// hot reload is its only caller. From out here `replace` on a texture a sprite is drawing is
-/// simply a trap: the sprite keeps showing the last frame written before the resize, forever.
-///
-/// So the handle is never reused. A new one is made instead, which gets its own bind group —
-/// and because a new handle also means a texture that nothing will ever free, one is made as
-/// rarely as possible. The frame is allocated once at the size of the largest display this
-/// window could be dragged onto, so going fullscreen needs no new texture at all, and it only
-/// ever grows. Every ordinary resize then costs nothing: the texture is already big enough.
-///
-/// What makes an oversized frame usable is the anchor. The sprite is pinned by its top-left
-/// corner to the top-left corner of the window and drawn at one texel to the pixel, so texel
-/// (0, 0) is window pixel (0, 0) whatever size either of them is, and the overhang falls off
-/// the right and bottom edges where the viewport clips it. The pass scissors itself to the
-/// window, so nothing is drawn into the overhang in the first place.
-fn ensure_renderer(
-    mut commands: Commands,
-    gpu: Option<Res<GpuContext>>,
-    handle: Option<Res<WindowHandle>>,
-    mut frame: ResMut<Frame>,
-    mut textures: ResMut<Assets<Texture>>,
-    mut sprites: Query<(&mut Sprite, &mut Transform2D)>,
-    window: Res<WindowInfo>,
-) {
+fn ensure_renderer(gpu: Option<Res<GpuContext>>, mut pass: ResMut<Pass>) {
     let Some(gpu) = gpu else { return };
-    if frame.renderer.is_none() {
-        frame.renderer = Some(Renderer::new(&gpu.device));
+    if pass.0.is_none() {
+        pass.0 = Some(Renderer::new(&gpu.device));
     }
-    if window.width == 0 || window.height == 0 {
-        return;
-    }
-    let seen = (window.width, window.height);
-
-    let wanted = frame_size(frame.size, seen, largest_display(handle.as_deref()));
-
-    if wanted != frame.size || frame.handle.is_none() {
-        frame.size = wanted;
-        let texture = gpu.device.create_texture(&wgpu::TextureDescriptor {
-            label: Some("life frame"),
-            size: wgpu::Extent3d {
-                width: wanted.0,
-                height: wanted.1,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: OUTPUT_FORMAT,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
-            view_formats: &[],
-        });
-        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-        // A fresh handle every time, never `replace`: see above.
-        frame.handle = Some(textures.insert_with_path(
-            format!("<life {}x{}>", wanted.0, wanted.1),
-            Texture {
-                texture,
-                view: view.clone(),
-                width: wanted.0,
-                height: wanted.1,
-            },
-        ));
-        frame.view = Some(view);
-    }
-
-    let texture = frame.handle.expect("just set");
-    let extent = vec2(wanted.0 as f32, wanted.1 as f32);
-    // The window's top-left corner, in world units, which are physical pixels here.
-    let corner = vec2(-(seen.0 as f32) / 2.0, seen.1 as f32 / 2.0);
-    match frame.sprite.and_then(|entity| sprites.get_mut(entity).ok()) {
-        Some((mut sprite, mut transform)) => {
-            sprite.texture = texture;
-            sprite.custom_size = Some(extent);
-            transform.translation = corner;
-        }
-        None => {
-            frame.sprite = Some(
-                commands
-                    .spawn((
-                        Sprite {
-                            // Pinned by its top-left corner rather than its middle, so that
-                            // texel (0, 0) is window pixel (0, 0) however much bigger the
-                            // frame is than the window.
-                            anchor: vec2(0.0, 1.0),
-                            ..Sprite::new(texture).with_size(extent).with_z(1.0)
-                        },
-                        Transform2D::from_xy(corner.x, corner.y),
-                    ))
-                    .id(),
-            );
-        }
-    }
-}
-
-/// The size of the largest display this window could be moved to, or a sensible guess when
-/// there is no window to ask.
-fn largest_display(handle: Option<&WindowHandle>) -> (u32, u32) {
-    let Some(handle) = handle else {
-        return (game::DEFAULT_WINDOW.x as u32, game::DEFAULT_WINDOW.y as u32);
-    };
-    handle
-        .0
-        .available_monitors()
-        .fold((0, 0), |biggest, monitor| {
-            let size = monitor.size();
-            (biggest.0.max(size.width), biggest.1.max(size.height))
-        })
 }
 
 /// Carry this generation to the GPU if it is not up there already, and draw it.
@@ -288,11 +166,15 @@ fn draw(
     board: Res<Board>,
     dials: Res<Dials>,
     painter: Res<Painter>,
-    window: Res<WindowInfo>,
-    mut frame: ResMut<Frame>,
+    frame: Res<Frame>,
+    mut pass: ResMut<Pass>,
 ) {
     let Some(gpu) = gpu else { return };
-    if window.width == 0 || window.height == 0 {
+    let Some(renderer) = pass.0.as_mut() else {
+        return;
+    };
+    let Some(view) = frame.view() else { return };
+    if !frame.ready() {
         return;
     }
     let uniforms = compose(
@@ -300,24 +182,10 @@ fn draw(
         dials.cell(),
         &LOOKS[painter.palette % LOOKS.len()],
         painter.reading,
-        (window.width, window.height),
+        frame.window(),
     );
-    let Frame {
-        renderer: Some(renderer),
-        view: Some(view),
-        ..
-    } = &mut *frame
-    else {
-        return;
-    };
     renderer.carry(&gpu.device, &gpu.queue, &board);
-    renderer.draw(
-        &gpu.device,
-        &gpu.queue,
-        &uniforms,
-        view,
-        (window.width, window.height),
-    );
+    renderer.draw(&gpu.device, &gpu.queue, &uniforms, view, frame.window());
 }
 
 /// The keys that change nothing about the rule: the palette, how the field is read, whether the
@@ -526,18 +394,20 @@ fn main() {
     })
     .insert_resource(assets!())
     .with_plugin(DefaultPlugins)
+    .with_plugin(FramePlugin::new("life", OUTPUT_FORMAT))
     .with_plugin(GamePlugin)
     .insert_resource(Painter {
         readout: true,
         ..Default::default()
     })
-    .insert_resource(Frame::default())
+    .insert_resource(Pass::default())
     .add_startup(setup)
     .add_frame_system(fit_window)
     .add_frame_system(painter_controls)
     .add_frame_system(measure)
-    // Chained: the second of these draws with what the first builds.
-    .add_frame_system((ensure_renderer, draw).chain())
+    // Chained: the second draws with what the first builds, and both come after the shared
+    // frame system, which is what decides the texture they are drawing into.
+    .add_frame_system((ensure_renderer, draw).chain().after(fit_frame))
     .add_frame_system(readout)
     .run();
 }

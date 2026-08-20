@@ -11,6 +11,9 @@ fulcrum = { workspace = true }
 # The `assets!()` this crate's `main` calls: the simulation's assets, inside its own
 # executable. See crates/simulacra-assets.
 simulacra-assets = { workspace = true }
+# The offscreen frame this piece's pass draws into, and the sprite that shows it. Shared with
+# the other seven pieces that compute every pixel themselves.
+simulacra-frame = { workspace = true }
 env_logger = { workspace = true }
 # Manifest-only: lets #[derive(Component)] resolve the `bevy_ecs::` paths it generates.
 # Game source imports only fulcrum::prelude.

@@ -15,10 +15,15 @@
 use fulcrum::prelude::*;
 use fulcrum_render::{GpuContext, WhitePixel, WindowHandle};
 use simulacra_assets::assets;
+use simulacra_frame::{Frame, FramePlugin, fit_frame};
 use thunderhead::game::{
     self, DRIFTERS, Field, GamePlugin, Motion, RESIZE_COMMAND, Sky, window_payload,
 };
 use thunderhead::look::{LOOKS, lut};
+
+/// What the picture is written in: sRGB, so the palette's bytes go in untouched and the GPU
+/// handles both ends of the linear-light conversion.
+const FRAME_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;
 
 /// Readout text height in world units, before HiDPI scaling. The built-in pixel font is
 /// sharpest at multiples of 8.
@@ -59,10 +64,6 @@ impl Default for Painter {
 /// The one texture the whole picture is uploaded through, and the buffers that feed it.
 #[derive(Resource)]
 struct Screen {
-    /// Handle the full-screen sprite draws.
-    handle: Option<Handle<Texture>>,
-    /// The texture's current size, so a resize is noticed.
-    size: (u32, u32),
     /// One RGBA word per pixel, rebuilt every frame. Kept allocated between frames: at one
     /// cell per pixel this is sixteen megabytes, not something to allocate at 60 Hz.
     pixels: Vec<u32>,
@@ -71,19 +72,14 @@ struct Screen {
     table: [u32; 256],
     /// Which palette the table was built for.
     table_for: Option<usize>,
-    /// The sprite showing the picture.
-    sprite: Option<Entity>,
 }
 
 impl Default for Screen {
     fn default() -> Self {
         Self {
-            handle: None,
-            size: (0, 0),
             pixels: Vec::new(),
             table: [0; 256],
             table_for: None,
-            sprite: None,
         }
     }
 }
@@ -170,44 +166,16 @@ fn fit_window(
 /// The texture's format is sRGB, so the palette's sRGB bytes go in untouched and the GPU
 /// handles both ends of the linear-light conversion.
 fn paint(
-    mut commands: Commands,
     field: Res<Field>,
     painter: Res<Painter>,
     gpu: Option<Res<GpuContext>>,
-    mut textures: ResMut<Assets<Texture>>,
+    frame: Res<Frame>,
+    textures: Res<Assets<Texture>>,
     mut screen: ResMut<Screen>,
-    mut sprites: Query<&mut Sprite>,
 ) {
     let Some(gpu) = gpu else { return };
-    if field.cells.is_empty() {
+    if field.cells.is_empty() || !frame.ready() {
         return;
-    }
-
-    if screen.size != (field.width, field.height) {
-        screen.size = (field.width, field.height);
-        let texture = make_texture(&gpu, field.width, field.height);
-        match screen.handle {
-            Some(handle) => textures.replace(handle, texture),
-            None => screen.handle = Some(textures.insert_with_path("<screen>", texture)),
-        }
-        let handle = screen.handle.expect("just set");
-        let size = vec2(field.width as f32, field.height as f32);
-        match screen
-            .sprite
-            .and_then(|entity| sprites.get_mut(entity).ok())
-        {
-            Some(mut sprite) => sprite.custom_size = Some(size),
-            None => {
-                screen.sprite = Some(
-                    commands
-                        .spawn((
-                            Sprite::new(handle).with_size(size).with_z(1.0),
-                            Transform2D::default(),
-                        ))
-                        .id(),
-                );
-            }
-        }
     }
 
     if screen.table_for != Some(painter.palette) {
@@ -228,7 +196,9 @@ fn paint(
         *pixel = table[cell as usize];
     }
 
-    let handle = screen.handle.expect("created above");
+    // Into the top-left corner of the shared frame, which is usually bigger than this: the
+    // extent given is the field's, not the texture's, so the rest of it is never touched.
+    let Some(handle) = frame.handle() else { return };
     let Some(texture) = textures.get(handle) else {
         return;
     };
@@ -251,31 +221,6 @@ fn paint(
             depth_or_array_layers: 1,
         },
     );
-}
-
-/// An empty texture the size of the screen, sRGB like every other texture in the engine.
-fn make_texture(gpu: &GpuContext, width: u32, height: u32) -> Texture {
-    let texture = gpu.device.create_texture(&wgpu::TextureDescriptor {
-        label: Some("<screen>"),
-        size: wgpu::Extent3d {
-            width,
-            height,
-            depth_or_array_layers: 1,
-        },
-        mip_level_count: 1,
-        sample_count: 1,
-        dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::Rgba8UnormSrgb,
-        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-        view_formats: &[],
-    });
-    let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-    Texture {
-        texture,
-        view,
-        width,
-        height,
-    }
 }
 
 /// `P` changes palette, `H` puts the readout away, `F11` toggles fullscreen.
@@ -378,13 +323,14 @@ fn main() {
     })
     .insert_resource(assets!())
     .with_plugin(DefaultPlugins)
+    .with_plugin(FramePlugin::new("thunderhead", FRAME_FORMAT))
     .with_plugin(GamePlugin)
     .insert_resource(Painter::default())
     .insert_resource(Screen::default())
     .add_startup(setup)
     .add_frame_system(fit_window)
     .add_frame_system(painter_controls)
-    .add_frame_system(paint)
+    .add_frame_system(paint.after(fit_frame))
     .add_frame_system(readout)
     .run();
 }

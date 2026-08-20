@@ -130,36 +130,6 @@ pub fn compose(
     }
 }
 
-/// How big the texture the pass draws into should be: big enough for the window, and never
-/// smaller than it already was.
-///
-/// This is a one-line policy with a bug behind it, so it is worth saying what it is for.
-///
-/// The engine's sprite renderer builds one GPU bind group per texture, keyed by the asset
-/// handle's id, and builds it once. `Assets::replace` puts new contents behind the same handle
-/// and therefore the same id, so the cached bind group is never rebuilt and keeps pointing at
-/// the texture that was replaced. The engine pairs its own `replace` calls with an invalidation
-/// for exactly this reason, but that call is not public. So from out here a texture a sprite is
-/// drawing must never be replaced: a new handle has to be made instead, and the picture freezes
-/// on the last frame before the resize if it is not.
-///
-/// A new handle means a texture nothing will free, so the rule is to need one as rarely as
-/// possible. Taking the largest display straight away means going fullscreen costs nothing, and
-/// never shrinking means the ordinary case — dragging an edge, which produces a new size every
-/// frame — costs nothing either. What is left is a handful of allocations in the life of a
-/// process, in exchange for a picture that keeps moving.
-pub fn frame_size(current: (u32, u32), window: (u32, u32), display: (u32, u32)) -> (u32, u32) {
-    if current == (0, 0) {
-        // Nothing allocated yet: take the biggest display this window could be dragged onto,
-        // and the window itself in case it is somehow larger still.
-        return (
-            display.0.max(window.0).max(1),
-            display.1.max(window.1).max(1),
-        );
-    }
-    (current.0.max(window.0), current.1.max(window.1))
-}
-
 // ---------------------------------------------------------------------------------------
 // the pass
 // ---------------------------------------------------------------------------------------

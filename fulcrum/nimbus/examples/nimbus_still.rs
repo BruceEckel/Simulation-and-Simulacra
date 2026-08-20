@@ -85,7 +85,7 @@ fn main() {
 
     // Once to warm the pipelines up, then a handful of frames with a fence between them, so the
     // time printed is the time a frame really takes rather than the time to queue one.
-    renderer.draw(&device, &queue, &uniforms, &view);
+    renderer.draw(&device, &queue, &uniforms, &view, (width, height));
     device
         .poll(wgpu::PollType::Wait {
             submission_index: None,
@@ -95,7 +95,7 @@ fn main() {
     let timed = std::time::Instant::now();
     const FRAMES: u32 = 8;
     for _ in 0..FRAMES {
-        renderer.draw(&device, &queue, &uniforms, &view);
+        renderer.draw(&device, &queue, &uniforms, &view, (width, height));
     }
     device
         .poll(wgpu::PollType::Wait {

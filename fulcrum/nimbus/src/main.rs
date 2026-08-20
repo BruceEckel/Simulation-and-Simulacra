@@ -18,6 +18,7 @@ use nimbus::look::LOOKS;
 use nimbus::noise::{detail_volume, shape_volume};
 use nimbus::sky::{self, OUTPUT_FORMAT, Renderer, Uniforms};
 use simulacra_assets::assets;
+use simulacra_frame::{Frame, FramePlugin, fit_frame};
 
 /// Readout text height in world units, before HiDPI scaling.
 const READOUT_SIZE: f32 = 8.0;
@@ -73,15 +74,6 @@ impl Default for Painter {
 struct Screen {
     /// Built on the first frame, once there is a device to build it against.
     renderer: Option<Renderer>,
-    /// Handle of the texture the finishing pass writes.
-    handle: Option<Handle<Texture>>,
-    /// The view of that texture, kept so a pass can be pointed at it without going through the
-    /// asset store every frame.
-    view: Option<wgpu::TextureView>,
-    /// Its current size.
-    size: (u32, u32),
-    /// The sprite showing it.
-    sprite: Option<Entity>,
     /// What the march ran at last frame, for the readout.
     internal: (u32, u32),
     /// Frame time, eased, in milliseconds.
@@ -150,84 +142,18 @@ fn fit_window(
     }
 }
 
-/// Build the noise volumes and the pipelines, once, on the first frame that has a device.
+/// Build the pipeline, once there is a device to build it against.
 ///
 /// Not a startup system: the GPU does not exist until the window does, and the window does not
-/// exist until the event loop has run once.
-fn ensure_renderer(
-    mut commands: Commands,
-    gpu: Option<Res<GpuContext>>,
-    mut screen: ResMut<Screen>,
-    mut textures: ResMut<Assets<Texture>>,
-    mut sprites: Query<&mut Sprite>,
-    window: Res<WindowInfo>,
-) {
+/// exist until the event loop has run once. The texture it draws into, and the sprite showing
+/// it, belong to `simulacra-frame` — see that crate for why they are not kept here.
+fn ensure_renderer(gpu: Option<Res<GpuContext>>, mut screen: ResMut<Screen>) {
     let Some(gpu) = gpu else { return };
     if screen.renderer.is_none() {
         let shape = shape_volume(7);
         let detail = detail_volume(11);
         screen.renderer = Some(Renderer::new(&gpu.device, &gpu.queue, &shape, &detail));
     }
-    if window.width == 0 || window.height == 0 {
-        return;
-    }
-    let size = (window.width, window.height);
-    if screen.size == size && screen.handle.is_some() {
-        return;
-    }
-    screen.size = size;
-
-    let texture = gpu.device.create_texture(&wgpu::TextureDescriptor {
-        label: Some("nimbus frame"),
-        size: wgpu::Extent3d {
-            width: size.0,
-            height: size.1,
-            depth_or_array_layers: 1,
-        },
-        mip_level_count: 1,
-        sample_count: 1,
-        dimension: wgpu::TextureDimension::D2,
-        format: OUTPUT_FORMAT,
-        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
-        view_formats: &[],
-    });
-    let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-    let wrapped = Texture {
-        texture,
-        view: texture_view(&view),
-        width: size.0,
-        height: size.1,
-    };
-    match screen.handle {
-        Some(handle) => textures.replace(handle, wrapped),
-        None => screen.handle = Some(textures.insert_with_path("<nimbus>", wrapped)),
-    }
-    screen.view = Some(view);
-
-    let handle = screen.handle.expect("just set");
-    let extent = vec2(size.0 as f32, size.1 as f32);
-    match screen
-        .sprite
-        .and_then(|entity| sprites.get_mut(entity).ok())
-    {
-        Some(mut sprite) => sprite.custom_size = Some(extent),
-        None => {
-            screen.sprite = Some(
-                commands
-                    .spawn((
-                        Sprite::new(handle).with_size(extent).with_z(1.0),
-                        Transform2D::default(),
-                    ))
-                    .id(),
-            );
-        }
-    }
-}
-
-/// A second view of the same texture. The engine's [`Texture`] wants one of its own and the
-/// render pass wants one it can hold across frames; a view is a handle, not a copy.
-fn texture_view(view: &wgpu::TextureView) -> wgpu::TextureView {
-    view.clone()
 }
 
 /// Draw the sky: work out this frame's uniforms and submit the two passes.
@@ -235,15 +161,15 @@ fn draw(
     gpu: Option<Res<GpuContext>>,
     weather: Res<Weather>,
     painter: Res<Painter>,
-    window: Res<WindowInfo>,
+    frame: Res<Frame>,
     time: Res<Time>,
     mut screen: ResMut<Screen>,
 ) {
     let Some(gpu) = gpu else { return };
-    if window.width == 0 || window.height == 0 || screen.view.is_none() {
+    if !frame.ready() {
         return;
     }
-    let screen_size = (window.width, window.height);
+    let screen_size = frame.window();
     let fraction = match painter.scale {
         Some(index) => SCALES[index % SCALES.len()],
         None => {
@@ -268,16 +194,12 @@ fn draw(
         if painter.flat { BANDS } else { 0.0 },
         INK,
     );
-    let Screen {
-        renderer: Some(renderer),
-        view: Some(view),
-        ..
-    } = &mut *screen
-    else {
+    let Some(view) = frame.view() else { return };
+    let Some(renderer) = screen.renderer.as_mut() else {
         return;
     };
     renderer.resize(&gpu.device, internal.0, internal.1);
-    renderer.draw(&gpu.device, &gpu.queue, &uniforms, view);
+    renderer.draw(&gpu.device, &gpu.queue, &uniforms, view, screen_size);
 }
 
 /// `P` changes palette, `B` flattens the colour, `1`-`5` set the march's resolution, `H` puts
@@ -405,6 +327,7 @@ fn main() {
     })
     .insert_resource(assets!())
     .with_plugin(DefaultPlugins)
+    .with_plugin(FramePlugin::new("nimbus", OUTPUT_FORMAT))
     .with_plugin(GamePlugin)
     .insert_resource(Painter::default())
     .insert_resource(Screen::default())
@@ -412,7 +335,9 @@ fn main() {
     .add_frame_system(fit_window)
     .add_frame_system(painter_controls)
     // Chained: the second of these draws with what the first builds.
-    .add_frame_system((ensure_renderer, draw).chain())
+    // Chained: the second draws with what the first builds, and both come after the shared
+    // frame system, which is what decides the texture they draw into.
+    .add_frame_system((ensure_renderer, draw).chain().after(fit_frame))
     .add_frame_system(readout)
     .run();
 }

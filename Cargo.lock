@@ -3,6 +3,17 @@
 version = 4
 
 [[package]]
+name = "_viewer"
+version = "0.1.0"
+dependencies = [
+ "bevy_ecs",
+ "env_logger",
+ "fulcrum",
+ "fulcrum-render",
+ "simulacra-assets",
+]
+
+[[package]]
 name = "ab_glyph"
 version = "0.2.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2197,6 +2208,7 @@ dependencies = [
  "image",
  "pollster",
  "simulacra-assets",
+ "simulacra-frame",
  "wgpu",
  "winit",
 ]
@@ -2213,6 +2225,7 @@ dependencies = [
  "image",
  "pollster",
  "simulacra-assets",
+ "simulacra-frame",
  "wgpu",
  "winit",
 ]
@@ -2400,6 +2413,7 @@ dependencies = [
  "image",
  "pollster",
  "simulacra-assets",
+ "simulacra-frame",
  "wgpu",
  "winit",
 ]
@@ -2416,6 +2430,7 @@ dependencies = [
  "image",
  "pollster",
  "simulacra-assets",
+ "simulacra-frame",
  "wgpu",
  "winit",
 ]
@@ -2432,6 +2447,7 @@ dependencies = [
  "image",
  "pollster",
  "simulacra-assets",
+ "simulacra-frame",
  "wgpu",
  "winit",
 ]
@@ -2514,6 +2530,7 @@ dependencies = [
  "image",
  "pollster",
  "simulacra-assets",
+ "simulacra-frame",
  "wgpu",
  "winit",
 ]
@@ -3025,6 +3042,7 @@ dependencies = [
  "image",
  "pollster",
  "simulacra-assets",
+ "simulacra-frame",
  "wgpu",
  "winit",
 ]
@@ -3593,6 +3611,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "simulacra-frame"
+version = "0.1.0"
+dependencies = [
+ "bevy_ecs",
+ "fulcrum",
+ "fulcrum-render",
+ "wgpu",
+]
+
+[[package]]
 name = "skrifa"
 version = "0.42.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3947,6 +3975,7 @@ dependencies = [
  "fulcrum-render",
  "image",
  "simulacra-assets",
+ "simulacra-frame",
  "wgpu",
  "winit",
 ]

@@ -1,6 +1,6 @@
 [package]
-name = "rts-slice"
-description = "An RTS slice: selection, flow-field movement, combat, mods, replays."
+name = "_viewer"
+description = "The front door: every simulation in the set, what it is, and a way to start it."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,12 +8,11 @@ repository.workspace = true
 
 [dependencies]
 fulcrum = { workspace = true }
-# The `assets!()` this crate's `main` calls: the simulation's assets, inside its own
-# executable. See crates/simulacra-assets.
+# The `assets!()` this crate's `main` calls: see crates/simulacra-assets.
 simulacra-assets = { workspace = true }
 env_logger = { workspace = true }
-serde = { workspace = true }
-ron = { workspace = true }
 # Manifest-only: lets #[derive(Component)] resolve the `bevy_ecs::` paths it generates.
 bevy_ecs = { workspace = true }
-log = { workspace = true }
+# Reached for directly: the font metrics the list is laid out against, and the white pixel the
+# highlight is a tinted copy of.
+fulcrum-render = { workspace = true }

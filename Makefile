@@ -15,8 +15,10 @@ SHELL := pwsh.exe
 .SHELLFLAGS := -NoProfile -Command
 .DEFAULT_GOAL := help
 
-# Every package under fulcrum/, which is the family of simulations built on that engine. Nothing
-# is excluded: unlike the repository these came from, there is no template in here.
+# Every package under fulcrum/, which is the family of simulations built on that engine, plus
+# `_viewer` — not a simulation but the front door onto them, named to sort first so that it is
+# the first thing anybody sees in dist/. Nothing is excluded: unlike the repository these came
+# from, there is no template in here.
 SIMLIST = Get-ChildItem fulcrum -Directory
 
 .PHONY: help sims build notes release dist run test check fmt lint engine publish publish-guards publish-upload clean
@@ -93,8 +95,8 @@ release: notes ## Every simulation in release, one file each into dist/, with it
 # somebody as an executable with no way to find out what it is, which is the whole reason the
 # notes go up in the first place; a note with no simulation is a file about something that is not
 # in the release, which is worse than nothing.
-notes: ## Check that every simulation has a note and every note a simulation
-	@$$sims = @($(SIMLIST) | ForEach-Object Name); $$notes = @(Get-ChildItem $(NOTES)/*.md | ForEach-Object BaseName | Where-Object { $$_ -ne 'README' }); $$missing = $$sims | Where-Object { $$_ -notin $$notes }; $$orphan = $$notes | Where-Object { $$_ -notin $$sims }; if ($$missing) { throw "no note in $(NOTES)/ for: $$($$missing -join ', ')" }; if ($$orphan) { throw "a note in $(NOTES)/ for something that is not a simulation: $$($$orphan -join ', ')" }; Write-Host ('  ' + $$sims.Count + ' simulations, ' + $$notes.Count + ' notes, one each way')
+notes: ## Check that everything under fulcrum/ has a note, and every note something to describe
+	@$$sims = @($(SIMLIST) | ForEach-Object Name); $$notes = @(Get-ChildItem $(NOTES)/*.md | ForEach-Object BaseName | Where-Object { $$_ -ne 'README' }); $$missing = $$sims | Where-Object { $$_ -notin $$notes }; $$orphan = $$notes | Where-Object { $$_ -notin $$sims }; if ($$missing) { throw "no note in $(NOTES)/ for: $$($$missing -join ', ')" }; if ($$orphan) { throw "a note in $(NOTES)/ for something that is not built here: $$($$orphan -join ', ')" }; Write-Host ('  ' + $$sims.Count + ' executables, ' + $$notes.Count + ' notes, one each way')
 
 # One line, because make gives every line its own shell: an `exit 0` in the first would not stop
 # the second from running and failing on the directory that is not there.

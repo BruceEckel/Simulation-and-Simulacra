@@ -371,12 +371,17 @@ impl Renderer {
     }
 
     /// Draw one frame into `target`.
+    ///
+    /// `target` is usually bigger than the window — `simulacra-frame` allocates it once for
+    /// the largest display and never shrinks it — so the pass scissors itself to the corner
+    /// that is actually on screen rather than shading fragments nobody can see.
     pub fn draw(
         &self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         uniforms: &Uniforms,
         target: &wgpu::TextureView,
+        window: (u32, u32),
     ) {
         queue.write_buffer(&self.uniforms, 0, bytemuck::bytes_of(uniforms));
         let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -399,6 +404,7 @@ impl Renderer {
                 occlusion_query_set: None,
                 multiview_mask: None,
             });
+            pass.set_scissor_rect(0, 0, window.0.max(1), window.1.max(1));
             pass.set_pipeline(&self.pipeline);
             pass.set_bind_group(0, &self.frame_bind, &[]);
             pass.set_bind_group(1, &self.sheet_bind, &[]);

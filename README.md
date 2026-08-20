@@ -2,7 +2,8 @@
 
 Experiments in simulation.
 
-Twenty-one pieces, each one a program that runs a rule and draws what the rule does.
+Twenty-one pieces, each one a program that runs a rule and draws what the rule does, and a
+front door that lists them and starts whichever you pick.
 Some are simulations in the ordinary sense: sand piling up until it slides, a gas carrying heat between two walls, a flock with three rules and no leader.
 The rest are simulacra, which is the other half of the title: a Moebius sky, a Parrish sky, a Van Gogh painting run as a fluid.
 Those simulate a way of drawing rather than a piece of the world.
@@ -11,6 +12,7 @@ Those simulate a way of drawing rather than a piece of the world.
 make            # what all of this does
 make sims       # the list
 make run SIM=moebius3
+make run SIM=_viewer   # the front door, which starts any of the others
 ```
 
 ## The engine
@@ -78,6 +80,7 @@ Each one goes up with its note from [`Windows/`](Windows) — what the piece is 
 
 | | |
 |---|---|
+| `_viewer` | The front door: every simulation in the set, what it is, and a way to start it. |
 | `avalanche` | A table of sand with one rule, and the power law that falls out of it. |
 | `boids` | Reynolds flocking on Fulcrum's deterministic spatial grid. |
 | `flutter` | A swarm of moths around a lamp: add moths, take them away, and run it at any pace. |
@@ -109,8 +112,10 @@ Cargo.toml          the workspace, and where the engine is imported from
 Makefile            build, check, release, publish
 crates/             this repository's own code
   simulacra-assets/ the assets!() macro: a simulation's assets, inside its executable
+  simulacra-frame/  the offscreen frame the pieces that compute every pixel draw into
 Windows/            one note per executable, published with the release
 fulcrum/            the simulations, one package each
+  _viewer/          the front door: what is in the set, and a way to start any of it
   moebius3/
     src/  assets/  tests/  examples/  README.md
 ```

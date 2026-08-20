@@ -40,6 +40,11 @@ fulcrum-render = { git = "https://github.com/jcerise/fulcrum.git" }
 
 # This repository's own.
 simulacra-assets = { path = "crates/simulacra-assets" }
+# The offscreen frame the pieces that compute every pixel themselves draw into. Also this
+# repository's own code on top of the engine's public API: the engine has no notion of a game
+# rendering its own picture and handing back one sprite, and getting it right needs a fact about
+# the sprite batcher's bind-group cache that is easy to be wrong about eight times over.
+simulacra-frame = { path = "crates/simulacra-frame" }
 
 # External, and every version here matches the engine's own workspace on purpose. A simulation
 # that hands a `wgpu::Device` to `fulcrum-render` has to be holding the same `wgpu` the engine was

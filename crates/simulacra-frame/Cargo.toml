@@ -1,0 +1,18 @@
+[package]
+name = "simulacra-frame"
+description = "The offscreen frame a simulation's own render pass draws into, shown as a sprite without going stale."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+# The engine, for the sprite and the texture asset this hands the renderer. Everything here is
+# built on its public API: the engine is upstream's and is not patched.
+fulcrum = { workspace = true }
+# Reached for directly: the window handle, to ask what displays there are.
+fulcrum-render = { workspace = true }
+# The texture itself.
+wgpu = { workspace = true }
+# Manifest-only: lets #[derive(Resource)] resolve the `bevy_ecs::` paths it generates.
+bevy_ecs = { workspace = true }

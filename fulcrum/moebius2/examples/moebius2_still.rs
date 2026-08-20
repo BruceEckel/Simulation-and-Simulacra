@@ -90,12 +90,12 @@ fn main() {
 
     // Once to warm the pipeline up, then a handful of frames with a fence after them, so the
     // time printed is the time a frame really takes rather than the time to queue one.
-    renderer.draw(&device, &queue, &uniforms, &slab, &view);
+    renderer.draw(&device, &queue, &uniforms, &slab, &view, (width, height));
     wait(&device);
     let timed = std::time::Instant::now();
     const FRAMES: u32 = 8;
     for _ in 0..FRAMES {
-        renderer.draw(&device, &queue, &uniforms, &slab, &view);
+        renderer.draw(&device, &queue, &uniforms, &slab, &view, (width, height));
     }
     wait(&device);
     let each = timed.elapsed() / FRAMES;

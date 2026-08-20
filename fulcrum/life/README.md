@@ -129,28 +129,13 @@ the fixed tick keeps firing, and the only thing the simulation ever hears about 
 that arrives a moment later on the replayable command channel — the same message a dragged window
 edge sends.
 
-There is one thing on the drawing side that a resize does have to be careful about, and it is
-worth writing down because nothing about it is visible from this side.
-
-The pass draws into an offscreen texture that a sprite then shows. The obvious way to handle a
-resize is to build a new texture the new size and put it behind the same asset handle with
-`Assets::replace`. That does not work. The engine's sprite renderer caches one GPU bind group per
-texture, keyed by the handle's id and built once with `or_insert_with`; `replace` keeps the id, so
-the cached bind group is never rebuilt and goes on pointing at the texture that was replaced. The
-engine pairs its own `replace` calls with an invalidation for exactly this reason, but that call
-is `pub(crate)` and hot reload is its only caller. The symptom is that the picture freezes on the
-last frame before the resize and never recovers, while the simulation underneath carries on
-perfectly happily — which is a confusing thing to be looking at.
-
-So the handle is never reused. A new one is made, which gets its own bind group. Because a new
-handle also means a texture that nothing will ever free, one is made as rarely as possible: the
-frame is allocated once at the size of the largest display the window could be dragged onto, and
-only ever grows. Going fullscreen therefore costs no allocation at all, and dragging an edge —
-which produces a new window size every frame — costs none either. The sprite is pinned by its
-top-left corner to the window's top-left and drawn at one texel to the pixel, so an oversized
-frame simply overhangs the right and bottom edges where the viewport clips it, and the pass
-scissors itself to the window so nothing is drawn into the overhang. `screen::frame_size` is that
-policy, and `tests/screen.rs` holds it to never shrinking and always covering the window.
+There is one thing on the drawing side that a resize has to be careful about, and it caught all
+eight of the pieces here that compute their own pixels. The frame a pass draws into cannot be
+rebuilt behind the same asset handle: the engine's sprite renderer caches one bind group per
+texture id and builds it once, so a replacement is never noticed and the picture freezes on the
+last frame before the resize while the simulation carries on underneath. That is
+[`simulacra-frame`](../../crates/simulacra-frame)'s whole reason for existing, and the long
+version of the explanation is in its module documentation.
 
 The field is then reshaped, and the pattern on it is **copied across with its middle on the new
 middle, and not scaled**. That is the only honest answer. A glider blown up by a factor of six is

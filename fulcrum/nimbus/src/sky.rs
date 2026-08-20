@@ -377,6 +377,7 @@ impl Renderer {
         queue: &wgpu::Queue,
         uniforms: &Uniforms,
         target: &wgpu::TextureView,
+        window: (u32, u32),
     ) {
         let (Some(scene), Some(scene_bind)) = (&self.scene, &self.scene_bind) else {
             return;
@@ -425,6 +426,7 @@ impl Renderer {
                 occlusion_query_set: None,
                 multiview_mask: None,
             });
+            pass.set_scissor_rect(0, 0, window.0.max(1), window.1.max(1));
             pass.set_pipeline(&self.finish);
             pass.set_bind_group(0, &self.frame_bind, &[]);
             pass.set_bind_group(1, scene_bind, &[]);

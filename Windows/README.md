@@ -8,12 +8,13 @@ place they exist. A binary committed beside its own source is a stale copy of so
 stores badly, and it was never any use to anybody else: it is out of date the moment the source
 moves on.
 
-The notes do go up with them. Every release carries these twenty-one files alongside the
+The notes do go up with them. Every release carries these twenty-two files alongside the
 executables, so somebody who has downloaded one `.exe` and nothing else can find out what it is
 and which keys it answers to without coming back here.
 
 | Executable | Description |
 |---|---|
+| [`_viewer.exe`](_viewer.md) | The front door: every simulation in the set, what it is, and a way to start it. |
 | [`avalanche.exe`](avalanche.md) | A table of sand with one rule, and the power law that falls out of it. |
 | [`boids.exe`](boids.md) | Reynolds flocking on a deterministic spatial grid. |
 | [`flutter.exe`](flutter.md) | A swarm of moths around a lamp: add moths, take them away, and run it at any pace. |
@@ -50,6 +51,10 @@ Releases are Windows only. For macOS or Linux, clone the repository and `cargo b
 --release`; nothing in the engine is platform-specific.
 
 ## Which to open first
+
+**`_viewer.exe`.** It is named with an underscore so it sorts to the top of the folder, and it is
+the one that explains the other twenty-one: it lists them with what each one is, and starts
+whichever you pick. Everything below is still true, and the viewer will tell you most of it.
 
 `thunderhead.exe`, `nimbus.exe`, `ligne.exe`, `parrish.exe`, `moebius.exe`, `moebius2.exe` and
 `moebius3.exe` are the ones to know about before double-clicking. Each opens borderless over the
