@@ -6,7 +6,7 @@ This is the source note. What the keys do is in [`Windows/_viewer.md`](../../Win
 
 ## Why it is here and why it is called that
 
-A release unpacks into a folder of twenty-two executables, and a folder of executables tells you
+A release unpacks into a folder of twenty-three executables, and a folder of executables tells you
 nothing about which of them you would like to look at. The underscore is the whole of the naming
 decision: `_` sorts before every letter, so this is the first thing in the folder, which is where
 something that explains the rest belongs.

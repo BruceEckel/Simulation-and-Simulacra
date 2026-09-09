@@ -8,7 +8,7 @@ place they exist. A binary committed beside its own source is a stale copy of so
 stores badly, and it was never any use to anybody else: it is out of date the moment the source
 moves on.
 
-The notes do go up with them. Every release carries these twenty-two files alongside the
+The notes do go up with them. Every release carries these twenty-three files alongside the
 executables, so somebody who has downloaded one `.exe` and nothing else can find out what it is
 and which keys it answers to without coming back here.
 
@@ -30,6 +30,7 @@ and which keys it answers to without coming back here.
 | [`moebius3.exe`](moebius3.md) | Those clouds with shading in them: hatched on the shaded side, up to two dozen arcs to an element, and a man on a horse crossing the desert. |
 | [`nimbus.exe`](nimbus.md) | Real-time volumetric clouds over a desert: a raymarched cloud layer, lit by a marched sun. |
 | [`parrish.exe`](parrish.md) | Maxfield Parrish clouds: a cloud field painted the way he painted, in transparent coats over a white ground. |
+| [`pond.exe`](pond.md) | A pond at dusk that answers the pointer slowly and asks nothing: rings, a wake, and a lantern that walks when you leave it alone. |
 | [`popped.exe`](popped.md) | Hot-air balloons full of cheerful animals, and a mouse pointer. |
 | [`rally.exe`](rally.md) | Pong as a simulation: autonomous paddles, a court that keeps adding balls and paddles. |
 | [`rts-slice.exe`](rts-slice.md) | An RTS slice: selection, flow-field movement, combat, mods, replays. |
@@ -40,7 +41,7 @@ and which keys it answers to without coming back here.
 ## Getting one
 
 Take it from a [release](https://github.com/BruceEckel/Simulation-and-Simulacra/releases). It is
-one zip. Unpack it and you have a directory holding all twenty-two executables, a note for each,
+one zip. Unpack it and you have a directory holding all twenty-three executables, a note for each,
 and a `SHA256SUMS.txt`, with `_viewer.exe` sorted to the top — open that one first.
 
 Keep them together. Each executable carries its own assets and will run from anywhere you move it
@@ -58,7 +59,7 @@ Releases are Windows only. For macOS or Linux, clone the repository and `cargo b
 ## Which to open first
 
 **`_viewer.exe`.** It is named with an underscore so it sorts to the top of the folder, and it is
-the one that explains the other twenty-one: it lists them with what each one is, and starts
+the one that explains the other twenty-two: it lists them with what each one is, and starts
 whichever you pick. Everything below is still true, and the viewer will tell you most of it.
 
 `thunderhead.exe`, `nimbus.exe`, `ligne.exe`, `parrish.exe`, `moebius.exe`, `moebius2.exe` and

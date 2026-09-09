@@ -2,7 +2,7 @@
 
 Experiments in simulation.
 
-Twenty-one pieces, each one a program that runs a rule and draws what the rule does, and a
+Twenty-two pieces, each one a program that runs a rule and draws what the rule does, and a
 front door that lists them and starts whichever you pick.
 Some are simulations in the ordinary sense: sand piling up until it slides, a gas carrying heat between two walls, a flock with three rules and no leader.
 The rest are simulacra, which is the other half of the title: a Moebius sky, a Parrish sky, a Van Gogh painting run as a fluid.
@@ -36,7 +36,7 @@ If the new commit breaks something, `git checkout Cargo.lock` puts the pin back.
 
 A simulation here is meant to be one file.
 You hand somebody `moebius3.exe` and it runs: no directory to keep beside it, nothing to unpack alongside it, no path from your machine baked into it.
-The set is *released* as one zip, because `_viewer.exe` needs the others in its own directory, but that is about delivering twenty-two of them at once: any one of them still runs from anywhere you move it afterwards.
+The set is *released* as one zip, because `_viewer.exe` needs the others in its own directory, but that is about delivering twenty-three of them at once: any one of them still runs from anywhere you move it afterwards.
 
 The engine has no notion of that.
 `AssetServer::new(root)` takes a directory, and a game written the ordinary way passes `concat!(env!("CARGO_MANIFEST_DIR"), "/assets")`, which is an absolute path fixed at build time.
@@ -67,7 +67,7 @@ Every simulation in there is still one file with its assets inside it.
 ```sh
 make check                     # format, clippy, tests, determinism in release
 git commit -am "..." && git push
-make release                   # one zip in dist/, with all 22 in it
+make release                   # one zip in dist/, with all 23 in it
 make publish VERSION=v0.1.0    # builds, tags, pushes, uploads
 ```
 
@@ -98,6 +98,7 @@ Each one goes up with its note from [`Windows/`](Windows) — what the piece is 
 | `moebius3` | Moebius clouds with shading: hatched on the shaded side, up to two dozen arcs to an element, and a man on a horse crossing the desert. |
 | `nimbus` | Real-time volumetric clouds over a desert: a raymarched cloud layer, lit by a marched sun. |
 | `parrish` | Maxfield Parrish clouds: a cloud field painted the way he painted, in transparent coats over a white ground. |
+| `pond` | A pond at dusk that answers the pointer slowly and asks nothing: rings, a wake, and a lantern that walks when you leave it alone. |
 | `popped` | Hot-air balloons full of cheerful animals, and a mouse pointer. |
 | `rally` | Pong as a simulation: autonomous paddles, a court that keeps adding balls and paddles. |
 | `rts-slice` | An RTS slice: selection, flow-field movement, combat, mods, replays. |

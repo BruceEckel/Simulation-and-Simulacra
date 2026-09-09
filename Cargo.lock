@@ -3153,6 +3153,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pond"
+version = "0.1.0"
+dependencies = [
+ "bevy_ecs",
+ "bytemuck",
+ "env_logger",
+ "fulcrum",
+ "fulcrum-render",
+ "image",
+ "pollster",
+ "simulacra-assets",
+ "simulacra-frame",
+ "wgpu",
+ "winit",
+]
+
+[[package]]
 name = "popped"
 version = "0.1.0"
 dependencies = [

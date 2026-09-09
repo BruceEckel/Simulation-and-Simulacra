@@ -4,9 +4,9 @@ The front door: every simulation in the set, what it is, and a way to start it.
 
 ## What it is
 
-A release unpacks into a folder of twenty-two executables with names like `moebius3.exe` and
+A release unpacks into a folder of twenty-three executables with names like `moebius3.exe` and
 `heatflow.exe`, and nothing in a folder tells you which of them you would like. This is the one
-that does. It lists all twenty-one simulations with the line each one describes itself with, and
+that does. It lists all twenty-two simulations with the line each one describes itself with, and
 starts whichever you pick.
 
 It is called `_viewer` for one reason only: the underscore sorts it to the top of a directory
