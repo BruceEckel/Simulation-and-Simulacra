@@ -82,11 +82,11 @@ NOTES = Windows
 # the zip. Two things follow from that, and both are the point of it.
 #
 # The set is meant to be taken whole. `_viewer.exe` looks for the simulations beside itself, so
-# the twenty-three executables are only useful in one another's company; a release page of
-# forty-eight separate assets invites picking one out of the middle, which is exactly the way to
+# the twenty-four executables are only useful in one another's company; a release page of
+# fifty separate assets invites picking one out of the middle, which is exactly the way to
 # end up with a front door and nothing behind it.
 #
-# And a zip that unpacks into a *directory* rather than scattering forty-eight files into whatever
+# And a zip that unpacks into a *directory* rather than scattering fifty files into whatever
 # folder it was opened in is the difference between one tidy thing to keep and a mess in
 # Downloads. Naming that directory for the version means two of them can sit side by side.
 STEM = simulation-and-simulacra$(if $(VERSION),-$(VERSION))

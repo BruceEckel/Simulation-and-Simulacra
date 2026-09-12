@@ -8,7 +8,7 @@ place they exist. A binary committed beside its own source is a stale copy of so
 stores badly, and it was never any use to anybody else: it is out of date the moment the source
 moves on.
 
-The notes do go up with them. Every release carries these twenty-three files alongside the
+The notes do go up with them. Every release carries these twenty-four files alongside the
 executables, so somebody who has downloaded one `.exe` and nothing else can find out what it is
 and which keys it answers to without coming back here.
 
@@ -19,6 +19,7 @@ and which keys it answers to without coming back here.
 | [`boids.exe`](boids.md) | Reynolds flocking on a deterministic spatial grid. |
 | [`flutter.exe`](flutter.md) | A swarm of moths around a lamp: add moths, take them away, and run it at any pace. |
 | [`fractal.exe`](fractal.md) | Ten fractals, two families, and a progressive viewer to zoom into them with. |
+| [`giraffe.exe`](giraffe.md) | A spatial prisoner's dilemma in which some of the players say what they need, and a dial for how often needs truly conflict. |
 | [`heatflow.exe`](heatflow.md) | Statistical heat flow: a hard-disk gas conducting heat between two thermal walls. |
 | [`jig.exe`](jig.md) | A dancing skeleton: shake the hips, and eighteen pendulums work out the rest. |
 | [`life.exe`](life.md) | Conway's Game of Life and forty-three of its relatives, from blocky cells down to one per pixel. |
@@ -41,7 +42,7 @@ and which keys it answers to without coming back here.
 ## Getting one
 
 Take it from a [release](https://github.com/BruceEckel/Simulation-and-Simulacra/releases). It is
-one zip. Unpack it and you have a directory holding all twenty-three executables, a note for each,
+one zip. Unpack it and you have a directory holding all twenty-four executables, a note for each,
 and a `SHA256SUMS.txt`, with `_viewer.exe` sorted to the top — open that one first.
 
 Keep them together. Each executable carries its own assets and will run from anywhere you move it
@@ -59,7 +60,7 @@ Releases are Windows only. For macOS or Linux, clone the repository and `cargo b
 ## Which to open first
 
 **`_viewer.exe`.** It is named with an underscore so it sorts to the top of the folder, and it is
-the one that explains the other twenty-two: it lists them with what each one is, and starts
+the one that explains the other twenty-three: it lists them with what each one is, and starts
 whichever you pick. Everything below is still true, and the viewer will tell you most of it.
 
 `thunderhead.exe`, `nimbus.exe`, `ligne.exe`, `parrish.exe`, `moebius.exe`, `moebius2.exe` and

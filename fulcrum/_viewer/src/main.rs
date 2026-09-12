@@ -7,7 +7,7 @@
 //! - `Esc` closes this
 //!
 //! It is called `_viewer` so that it sorts to the top of a directory listing, which is the only
-//! reason: somebody who has unpacked a release into a folder of twenty-two executables should
+//! reason: somebody who has unpacked a release into a folder of twenty-three executables should
 //! find the one that explains the other twenty-one without having to look for it.
 //!
 //! It looks for the simulations **beside itself**, which is the right answer both ways round: a

@@ -1538,6 +1538,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "giraffe"
+version = "0.1.0"
+dependencies = [
+ "bevy_ecs",
+ "env_logger",
+ "fulcrum",
+ "fulcrum-render",
+ "simulacra-assets",
+ "winit",
+]
+
+[[package]]
 name = "gl_generator"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

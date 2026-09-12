@@ -2,7 +2,7 @@
 
 Experiments in simulation.
 
-Twenty-two pieces, each one a program that runs a rule and draws what the rule does, and a
+Twenty-three pieces, each one a program that runs a rule and draws what the rule does, and a
 front door that lists them and starts whichever you pick.
 Some are simulations in the ordinary sense: sand piling up until it slides, a gas carrying heat between two walls, a flock with three rules and no leader.
 The rest are simulacra, which is the other half of the title: a Moebius sky, a Parrish sky, a Van Gogh painting run as a fluid.
@@ -36,7 +36,7 @@ If the new commit breaks something, `git checkout Cargo.lock` puts the pin back.
 
 A simulation here is meant to be one file.
 You hand somebody `moebius3.exe` and it runs: no directory to keep beside it, nothing to unpack alongside it, no path from your machine baked into it.
-The set is *released* as one zip, because `_viewer.exe` needs the others in its own directory, but that is about delivering twenty-three of them at once: any one of them still runs from anywhere you move it afterwards.
+The set is *released* as one zip, because `_viewer.exe` needs the others in its own directory, but that is about delivering twenty-four of them at once: any one of them still runs from anywhere you move it afterwards.
 
 The engine has no notion of that.
 `AssetServer::new(root)` takes a directory, and a game written the ordinary way passes `concat!(env!("CARGO_MANIFEST_DIR"), "/assets")`, which is an absolute path fixed at build time.
@@ -67,7 +67,7 @@ Every simulation in there is still one file with its assets inside it.
 ```sh
 make check                     # format, clippy, tests, determinism in release
 git commit -am "..." && git push
-make release                   # one zip in dist/, with all 23 in it
+make release                   # one zip in dist/, with all 24 in it
 make publish VERSION=v0.1.0    # builds, tags, pushes, uploads
 ```
 
@@ -87,6 +87,7 @@ Each one goes up with its note from [`Windows/`](Windows) — what the piece is 
 | `boids` | Reynolds flocking on Fulcrum's deterministic spatial grid. |
 | `flutter` | A swarm of moths around a lamp: add moths, take them away, and run it at any pace. |
 | `fractal` | Ten fractals, two families, and a progressive viewer to zoom into them with. |
+| `giraffe` | A spatial prisoner's dilemma in which some of the players say what they need, and a dial for how often needs truly conflict. |
 | `heatflow` | Statistical heat flow: a hard-disk gas conducting heat between two thermal walls. |
 | `jig` | A dancing skeleton: shake the hips, and eighteen pendulums work out the rest. |
 | `life` | Conway's Game of Life and forty-three of its relatives, from blocky cells down to one per pixel. |
